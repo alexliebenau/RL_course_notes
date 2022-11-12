@@ -32,11 +32,11 @@ State transition matrix $\rho$ defines transition probabilites from all states \
 
 \begin{equation}
 \mathcal{P} \; = \; from 
-\begin{pmatrix}
+\stackrel{\mbox{$to$}}{\begin{pmatrix}
 \mathcal{P}_{11} & \ldots & \mathcal{P}_{1n} \\
 \vdots & & \\
 \mathcal{P}_{n1} & \ldots & \mathcal{P}_{nn} \\
-\end{pmatrix}
+\end{pmatrix}}
 \end{equation}
 
 Each row of the matrix sums to 1! \newline
@@ -99,6 +99,7 @@ v(s) \; = \; \mathbb{E}\;[G_{t} \; | \; S_{t} \; = \; s] \; = \; \mathbb{E}\;[R_
 By averaging all possible outcomes we get
 \begin{equation}
 v(s) \; = \; \mathcal{R}_{s} \; + \; \gamma \: \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}\:v(s')
+ \label{eq:averaging_mrp}
 \end{equation}
 
 The Bellman  equation can be concisely using matrices, where $v$ is a column vector with one entry per state
@@ -111,8 +112,8 @@ v(1) \\ \vdots \\ v(n) \end{pmatrix} \; = \; \begin{pmatrix}
 \mathcal{P}_{11} & \ldots & \mathcal{P}_{1n} \\
 \vdots & & \\
 \mathcal{P}_{n1} & \ldots & \mathcal{P}_{nn} \\ \end{pmatrix} \; \begin{pmatrix}
-v(1) \\ \vdots \\ v(n) \end{pmatrix}
-\end{equation}
+v(1) \\ \vdots \\ v(n) \end{pmatrix} \label{eq:mrp_matrix}
+\end{equation} 
 
 The Bellman equation is linear. It can be solved directly by $v = (I - \gamma \mathcal{P})^{-1} \mathcal{R}$.
 
@@ -142,7 +143,7 @@ A policy $\pi$ is a distribution over actions given states. It fully defines the
 
 In an MDP, the policies depend on the current state (not the history). Policies are stationary: $A_{t} = \pi ( \dot | S_{t} ), \forall t > 0$ \newline
 
-Given an MDP $\mathcal{M} = \langle \mathcal{S, A, P, R,} \gamma \rangle and a policy \pi$:
+Given an MDP $\mathcal{M} = \langle \mathcal{S, A, P, R,} \gamma \rangle$ and a policy $\pi$:
 \begin{itemize}
 \item The state sequence $S_{1}, S_{2}, \ldots$ is a Markov process $\langle \mathcal{S, P^{\pi}} \rangle$
 \item The state and reward sequence $S_{1}, ,R_{2}, S_{2}, \ldots$ is a Markov reward process $\langle \mathcal{S}, \: \mathcal{P}, \: \mathcal{R}, \: \gamma \rangle$ where
@@ -177,7 +178,116 @@ Basically, the state-value averages over the different actions that can be taken
 v_{\pi}(s) \; = \; \sum_{a \in \mathcal{A}} \pi(a|s)\:q_{\pi}(s,\:a)
 \end{equation}
 
-The other way around, by using the probabilities of the transition dynamics we can average through t
+The other way around, by using the probabilities of the transition dynamics we can average through the values of the successing states we can evaluate a certain action:
+
+\begin{equation}
+q_{\pi}(s,\:a)\;=\;\mathcal{R}_{s}^{a}\;+\;\gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^{a}\:v_{\pi}(s')
+\label{eq:qn_avg}
+\end{equation}
+
+\begin{itemize}
+\item $v$ is is telling how good it is to be in a particular state
+\item $q$ is telling how good it is to take a particular action
+\end{itemize}
+
+
+Sticking these together in order to solve MDPs end up in a two-step lookahead:
+\begin{itemize}
+\item Consider all action we might take next $(v)$
+\item Consider all the things the environment might do to us $(q)$
+\item Evaluate the successor state after what the environment did after that point
+\end{itemize}
+
+By double-averaging over the policy as well as the transistion probability we get the answer to how good it is to be in a particular state (as the Bellman Equation):
+
+\begin{equation}
+v_{\pi}(s)\;=\;\sum_{a \in \mathcal{A}} \pi(a|s)\: \left( \: \mathcal{R}_{s}^{a}\;+\;\gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^{a}\:v_{\pi}(s') \: \right)
+\label{eq:v_pi_be}
+\end{equation}
+
+Starting from a particular action, we can also do the same two-step lookahead and see where the wind blows us, and from there consider which action might be taken next. By averaging the same way above we get same recursive relationship:
+
+\begin{equation}
+q_{\pi}(s,\:a)\;=\;\mathcal{R}_{s}^{a}\;+\;\gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^{a}\: \sum_{a' \in \mathcal{A}} \pi(a'|s')\:q_{\pi}(s',\:a')
+\end{equation}
+
+This shows how the value- and action function of the next step relates to itself, we therefore get a recursive relationship. \textbf{After  all, the value function of the current time step is equal to the immediate reward plus the value function of where you end up.}
+
+
+To flatten the MDP into a MRP one could average out the matrices as in (\ref{eq:averaging_mrp}) following policy $\pi$ and then solve accordingly as in (\ref{eq:mrp_matrix}). Thereby we can determine the value function.
+
+.\newline
+\textbf{\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_}
+\textbf{For more info on undiscounted MDPs:}
+
+Neurodynamic Programming / Dynamic Programming;
+Dimitri Bertsekas Dynamic Programming and Optimal Control (2 Vol Set)
+\textbf{\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_} \newline
+
+\subsection{The Optimal Value Function}
+The optimal \textit{state-value} and \textit{action-value} functions are the maximum functions over all policies
+\begin{equation}
+v_{*}(s)\;=\;\mathop{max}_{\pi} \; v_{\pi}(s) \qquad q_{*}(s,a)\;=\;\mathop{max}_{\pi} \; q_{\pi}(s, a)
+\end{equation}
+
+\begin{itemize}
+\item The optimal value function specifies the best performance in an MDP
+\item An MDP is 'solved' when we know the optimal value function
+\end{itemize}
+
+If you know $q_{*}$, you're basically done. It tells you under all different ways to behave which one gives the most reward.
+
+There is always one optimal policy. This optimal policy will then achieve the optimal \textit{state-value} and \textit{action-value} function $v_{\pi_{*}}$ and $q_{\pi_{*}}$. So we can define a partial ordering over policies:
+
+\begin{equation}
+\pi \: \geq \: \pi ' \quad if \quad v_{\pi}(s) \geq v_{\pi'}(s), \forall s
+\end{equation}
+
+An optimal policy can be found by maximising over $q_{\pi_{*}}(s,a)$:
+
+\begin{equation}
+\pi_{*}(a|s)\;=\; \Big\{ \begin{matrix} 
+ 1 \quad $if$ \;\; a \: = \: \mathop{argmax}_{a \in \mathcal{A}} \; q_{\pi_{*}}(s,a) \\
+\; 0 \quad $otherweise$ \hphantom{abcdedgwfdwfdgh}
+\end{matrix}
+\end{equation}
+
+\subsubsection*{The Bellman Optimality Equation}
+
+The optimal value functions are recursively related by the Bellman optimality equations:
+
+Instead of taking the average of all actions, you pick the maximum. That determines the optimal value function of a state:
+\begin{equation}
+v_{*} = \mathop{max}_{a} \; q_{*}(s, a)
+\end{equation}
+
+Now looking at the action-value function, we can inductively assume that each of the states we might end up in has a optimal state-value $v_{*}$. Therefore, similar as for (\ref{eq:qn_avg}), to determine the action-value we add the immediate reward to the average of the optimal state-values where we could end up in:
+
+\begin{equation}
+q_{*}(s,\:a)\;=\;\mathcal{R}_{s}^{a}\;+\;\gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^{a}\:v_{*}(s')
+\end{equation}
+
+As we did before in (\ref{eq:v_pi_be}), we can put these two together to create the recursive relationship with the two-step lookahead. For the optimal solution, we pick the maximum instead of the average. This is the Bellman optimality equation for $v_{*}$:
+
+\begin{equation}
+v_{*}(s)\;=\;\mathop{max}_{a}\: \left( \: \mathcal{R}_{s}^{a}\;+\;\gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^{a}\:v_{*}(s') \: \right)
+\end{equation}
+
+By reordering the same idea, we can again define the Bellman optimality equation for $q_{*}$. 
+
+\begin{equation}
+q_{*}(s,\:a)\;=\;\mathcal{R}_{s}^{a}\;+\;\gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^{a}\: \sum_{a' \in \mathcal{A}} \mathop{max}_{a'} \; q_{*}(s', a')
+\end{equation}
+
+\subsubsection*{Solving the Bellman Optimality Equation}
+
+\begin{itemize}
+\item The Bellman Optimality Equation is non-linear \newline
+$\qquad \rightarrow$ Solving by inverting matrices will not work
+\item No closed form solution (in general)
+\item Many iterative solution methods \newline
+$\qquad \rightarrow$ Value iteration, policy interation, \textbf{Q-Learning}, Sarsa
+\end{itemize}
 \newline 
-continue at 58:00 write down q pi
+
 \end{document}

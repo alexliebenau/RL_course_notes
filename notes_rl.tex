@@ -1,0 +1,183 @@
+\documentclass[10pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage{xparse}
+
+\begin{document}
+\section{Lecture two: Markov Decision Process (MDP)}
+\subsection{Markov Process}
+
+The current state characterises the process -> we are told the state --> environment is fully observable\newline
+
+Almost all RL problems can be formalised as MDPs\newline
+--> Optimal control primarily deals with continious MDPs\newline
+--> Any partially observable problems can be converted into MDPs\newline
+--> Bandits are MDPs with one state\newline
+
+"The future is independent of the past given the present"
+
+\begin{equation}
+	\mathbb{P} \: [S_{t+1}\; | \; S_{t}] \; = \; \mathbb{P} \: [S_{t+1} \; | \; S_{1}, \ldots , S_{t}]
+\end{equation}
+
+
+What happens next only depends on what happend on the state before - you can throw away anything else.\newline
+
+For a Markov state \textit{s} and successor state \textit{s'}, the \textit{state transition probability} is defined as
+
+\begin{equation}
+\mathcal{P}_{ss'} \; = \; \mathbb{P}\:[S_{t+1}\:=\:\textit{s'}\; | \; S_{t}\:=\:\textit{s}]
+\end{equation}
+
+State transition matrix $\rho$ defines transition probabilites from all states \textit{s} to all successor states \textit{s'}.
+
+\begin{equation}
+\mathcal{P} \; = \; from 
+\begin{pmatrix}
+\mathcal{P}_{11} & \ldots & \mathcal{P}_{1n} \\
+\vdots & & \\
+\mathcal{P}_{n1} & \ldots & \mathcal{P}_{nn} \\
+\end{pmatrix}
+\end{equation}
+
+Each row of the matrix sums to 1! \newline
+A Markov process is a memoryless random process, i.e. a sequence of random states, $S_{1}, \: S_{2}, \: \ldots$ with the Markov propoerty. It is defined as a tuple $\langle \mathcal{S}, \: \mathcal{P} \rangle$.
+\begin{itemize}
+\item S is a (finite) set of states
+\item $\mathcal{P}$ is a state transition probability matrix
+\end{itemize}
+
+\subsection{Markov Reward process (MRP)}
+
+The Markov Reward Process is defined as a tuple $\langle \mathcal{S}, \: \mathcal{P}, \: \mathcal{R}, \: \gamma \rangle$.
+\begin{itemize}
+\item $\mathcal{S}$ is a (finite) set of states
+\item $\mathcal{P}$ is a state transition probability matrix
+\item $\mathcal{R}$ is a reward function, $\mathcal{R}_{s} \: = \: \mathbb{E}[R_{t+1} \: | \: S_{t} = s]$
+\item $\gamma$ is a discount factor, $\gamma \in [0,1]$
+\end{itemize}
+
+The \textit{return} $\mathcal{G}_{t}$ is the total discounted reward from time-step \textit{t}.
+
+\begin{equation}
+\mathcal{G}_{t} \; = \; R_{t+1} \; + \; \gamma R_{t+2} \; + \; \ldots \; = \;  \sum_{k=0}^{\infty} \;\gamma^{k} \: R_{t+k+1} 
+\end{equation}
+
+\begin{itemize}
+\item The discount $\gamma$ is the present value of future rewards - the closer $\gamma$ is to zero, the less are later rewards accounted (e.g. more 'short-sighted').
+\item The value of receiving reward $\mathcal{R}$ after $k+1$ time-steps is $ \gamma^{k} R$.
+\end{itemize}
+
+\subsubsection*{Why discount?}
+\begin{itemize}
+\item Unless you really trust your model and believe that everything turns out as planned, you need to discount in deviations - Uncertainty about the future may not be fully represented
+\item Mathematically convenient to discount rewards, avoids infinite returns
+\item If the reward is financial, immediate rewards may earn more interest than delayed rewards
+\item Animal/human behaviour shows preference for immediate reward
+\item It is sometimes possible to use \textit{undiscounted} Markov reward process (i.e. $\gamma = 1$), e.g. if all sequences terminate.
+\end{itemize}
+
+\subsubsection*{The value function}
+
+The value function \textit{v(s)} gives the long-term value of state s. It defines the expected return in a MRP starting from state \textit{s}:
+
+\begin{equation}
+v(s) \; = \; \mathbb{E}\;[G_{t} \; | \; S_{t} \; = \; s]
+\end{equation}
+
+The value function can be decomposed into two parts:
+
+\begin{itemize}
+\item immediate reward $R+1$
+\item discounted value of successor state $\gamma v(S_{t+1})$
+\end{itemize}
+
+This resolves into the \textbf{Bellman equation for MRPs}:
+\begin{equation}
+v(s) \; = \; \mathbb{E}\;[G_{t} \; | \; S_{t} \; = \; s] \; = \; \mathbb{E}\;[R_{t+1} \; + \; \gamma v(S_{t+1}) \; | \; S_{t} \; = \; s]
+\end{equation}
+
+By averaging all possible outcomes we get
+\begin{equation}
+v(s) \; = \; \mathcal{R}_{s} \; + \; \gamma \: \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}\:v(s')
+\end{equation}
+
+The Bellman  equation can be concisely using matrices, where $v$ is a column vector with one entry per state
+
+\begin{equation}
+v \; = \; \mathcal{R} \; + \; \gamma \: \mathcal{P} \: v \quad \rightarrow \quad
+\begin{pmatrix}
+v(1) \\ \vdots \\ v(n) \end{pmatrix} \; = \; \begin{pmatrix}
+\mathcal{R}_{1} \\ \vdots \\ \mathcal{R}_{n} \end{pmatrix} \; + \; \gamma \; \begin{pmatrix}
+\mathcal{P}_{11} & \ldots & \mathcal{P}_{1n} \\
+\vdots & & \\
+\mathcal{P}_{n1} & \ldots & \mathcal{P}_{nn} \\ \end{pmatrix} \; \begin{pmatrix}
+v(1) \\ \vdots \\ v(n) \end{pmatrix}
+\end{equation}
+
+The Bellman equation is linear. It can be solved directly by $v = (I - \gamma \mathcal{P})^{-1} \mathcal{R}$.
+
+\begin{itemize}
+\item The Computational complexity is O($n^{3}$) for \textit{n} states.
+\item Direct solution only possible for small MRPs
+\item Iterative methods for large MRPs, e.g. Dynamic programming, Monte-Carlo evaluation, Temporal-Difference learning
+\end{itemize}
+
+\subsection{Markov Decision Process (MDP)}
+A MDP is a MRP with decisions. It is an \textit{environment} in which all states are Markov. \newline
+A MDP is a tuple $\langle \mathcal{S, A, P, R,} \gamma \rangle$.
+
+\begin{itemize}
+\item $\mathcal{S}$ is a (finite) set of states
+\item $\mathcal{A}$ is a (finite) set of actions
+\item $\mathcal{P}$ is a state transition probability matrix \newline
+$\mathcal{P}_{ss'}^{a} \; = \; \mathbb{P}\:[S_{t+1}\:=\:\textit{s'}\; | \; S_{t}\:=\:\textit{s}, \; A_{t}\:=\:\textit{a}]$
+\item $\mathcal{R}$ is a reward function, $\mathcal{R}_{s}^{a}  \: = \: \mathbb{E}[R_{t+1} \: | \: S_{t} = s, \; A_{t}\:=\:\textit{a}]$
+\item $\gamma$ is a discount factor, $\gamma \in [0,1]$
+\end{itemize}
+
+A policy $\pi$ is a distribution over actions given states. It fully defines the behaviour of an agent.
+\begin{equation}
+\pi(a|s) \; = \; \mathbb{P}\:[\:\: S_{t} = s, \; A_{t}\:=\:\textit{a}\:]
+\end{equation}
+
+In an MDP, the policies depend on the current state (not the history). Policies are stationary: $A_{t} = \pi ( \dot | S_{t} ), \forall t > 0$ \newline
+
+Given an MDP $\mathcal{M} = \langle \mathcal{S, A, P, R,} \gamma \rangle and a policy \pi$:
+\begin{itemize}
+\item The state sequence $S_{1}, S_{2}, \ldots$ is a Markov process $\langle \mathcal{S, P^{\pi}} \rangle$
+\item The state and reward sequence $S_{1}, ,R_{2}, S_{2}, \ldots$ is a Markov reward process $\langle \mathcal{S}, \: \mathcal{P}, \: \mathcal{R}, \: \gamma \rangle$ where
+\begin{equation}
+\mathcal{P}_{s,s'}^{\pi} \; = \; \sum_{a \in \mathcal{A}} \; \pi (a|s)\: \mathcal{P}_{s,s'}^{a} \qquad
+\mathcal{R}_{s}^{\pi} \; = \; \sum_{a \in \mathcal{A}} \; \pi (a|s)\: \mathcal{R}_{s}^{a} 
+\end{equation}
+\end{itemize}
+
+The \textit{state-value function} $v_{\pi}(s)$ of an MDP is the expected return starting from state \textit{s}, and then following policy $\pi$:
+\begin{equation}
+v_{\pi}(s) \; = \; \mathbb{E}_{\pi} [ G_{t} \: | \: S_{t} \: = \: s] 
+\end{equation}
+
+The \textit{action-value function} $q_{\pi}(s, a)$ of an MDP is the expected return starting from state \textit{s}, taking action \textit{a}, and then following policy $\pi$:
+\begin{equation}
+q_{\pi}(s,a) \; = \; \mathbb{E}_{\pi} [ G_{t} \: | \: S_{t} \: = \: s, \: A_{t} \: = \: a] 
+\end{equation}
+
+The state-value and action-value functions can again be decomposed into Bellman equations consisting of immediate reward plus discounted value of successor state:
+
+\begin{equation}
+v_{\pi} \; = \; \mathbb{E}_{\pi} \:[ R_{t+1} \: + \: \gamma v_{\pi} (S_{t+1}) \: \ | \: S_{t} \: = \: s]
+\end{equation}
+\begin{equation}
+q_{\pi} \; = \; \mathbb{E}_{\pi} \:[ R_{t+1} \: + \: \gamma v_{\pi} (S_{t+1}, \: A_{t+1}) \: \ | \: S_{t} \: = \: s, \: A_{t} \: = \: a]
+\end{equation}
+
+Basically, the state-value averages over the different actions that can be taken:
+
+\begin{equation}
+v_{\pi}(s) \; = \; \sum_{a \in \mathcal{A}} \pi(a|s)\:q_{\pi}(s,\:a)
+\end{equation}
+
+The other way around, by using the probabilities of the transition dynamics we can average through t
+\newline 
+continue at 58:00 write down q pi
+\end{document}

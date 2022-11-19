@@ -4,6 +4,16 @@
 \usepackage{graphicx}
 
 \begin{document}
+\tableofcontents
+\section{Introduction}
+
+Script of the Reinforcment Learning Course by David Silver
+as uploaded on YouTube from 2015
+
+written by Alex Liebenau \newline
+created in November 2022 \newline
+free to use \newline
+\newpage
 \section{Lecture two: Markov Decision Process (MDP)}
 \subsection{Markov Process}
 
@@ -61,6 +71,7 @@ The \textit{return} $\mathcal{G}_{t}$ is the total discounted reward from time-s
 
 \begin{equation}
 \mathcal{G}_{t} \; = \; R_{t+1} \; + \; \gamma R_{t+2} \; + \; \ldots \; = \;  \sum_{k=0}^{\infty} \;\gamma^{k} \: R_{t+k+1} 
+\label{eq:g_t}
 \end{equation}
 
 \begin{itemize}
@@ -390,14 +401,14 @@ By using the magnitude of the Bellman error to guide state selection, the states
 \Big| \;  \mathop{max}_{a \in \mathcal{A}}\: \left( \: \mathcal{R}_{s}^{a}\;+\;\gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^{a}\:v_{old}(s') \: \right) \; - \; v(s) \; \Big|
 \end{equation}
 
-\subsubsection{Real-time Dynamic Programming}
+\subsubsection*{Real-time Dynamic Programming}
 The idea of \textit{Real-time programming} is to only update the states which are relevant to the agent. The experience of the agent is used to guide the the selection of states. After each time-step $S_{t}, A_{t}, R_{t+1}$, a backup of state $S_{t}$ is done.
 
 \begin{equation}
 v(S_{t})\; \leftarrow \; \mathop{max}_{a \in \mathcal{A}}\: \left( \: \mathcal{R}_{S_{t}}^{a}\;+\;\gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{S_{t}s'}^{a}\:v(s') \: \right) 
 \end{equation}
 
-\subsubsection{Full-Width and Sample backups}
+\subsubsection*{Full-Width and Sample backups}
 Dynamic programming uses \textit{full-width backups}, meaning that every state is backed up. For medium-sized problems consisting of a few millions of states, this is fine. But for large problems, dynamic programming suffer from the \textit{curse of dimensionality}, following from the exponential growth of the number of states with the number of state variables. 
 
 This is where sample backups come into play. Instead of backing up the whole state-space (which can be already too expensive for one iteration), only certain samples are backed up. The advantages are:
@@ -406,4 +417,63 @@ This is where sample backups come into play. Instead of backing up the whole sta
 \item Breaks the curse of dimensionality through sampling
 \item Cost of backup is constatnt, independant of $|n|=\mathcal{S}$ 
 \end{itemize}
+\newpage
+
+\section{Lecture Four: Model-Free Prediction}
+\subsection{Monte-Carlo Learning}
+Monte-Carlo Learning methods learn directly from episodes of experience. It is therefore important that the MDP is applied to \textit{episodic} MDP, where the (complete) episodes do terminate. The value function is assumed to be the simplest possible, the mean return of the samples.
+
+The goal is to learn the value function $v_{\pi}$ of a random policy $\pi$ by looking at some streams $S_{1}, A_{1}, R_{2}, \ldots, S_{k} \sim \pi$ of episode of experience and then evaluate the \textit{return} as the total discounted reward $\mathcal{G}_{t}$ form (\ref{eq:g_t}). Instead of using the \textit{expected} return of the value function, Monte-Carlo Learning uses the \textit{empirical mean} from the sampled episodes.
+
+\subsubsection*{First-Visit Monte-Carlo policy evaluation}
+\begin{itemize}
+\item To evaluate the state $s$, the first time-step it is visited in an episode, an incremental counter is initialized: 
+$N(s) \leftarrow N(s) + 1$
+\item The total return is added up: $S(s) \leftarrow S(s) + G_{t}$
+\item The value of the state is estimated by mean return: $V(s) = S(s) / N(s)$
+\end{itemize}
+By the law of large numbers, the value of the state $V(s)$ converges to the actual value $v_{\pi}$ of the state is visited many times so that the estimated mean consists of a large number of visits: $V(s) \rightarrow v_{\pi}$ as $N(s) \rightarrow \infty$
+
+The \textbf{Every-Visit Monte-Carlo policy evaluation} works in a very similar fashion, just that the counter and return is incremented - as the name suggests - every time the episode visits a state.
+
+\subsubsection*{Incremental Monte-Carlo}
+The mean $\mu_{1}, \mu_{2}, \ldots$ of a sequence $x_{1}, x_{2}, \ldots$ can be computed incrementally:
+\begin{equation}
+\begin{aligned}
+\mu_{k}\; &=\;\frac{1}{k}\:\sum_{j=1}^{k}\:x_{j}\\
+&=\;\frac{1}{k}\:\big( x_{k} \:+\: \sum_{j=1}^{k-1}\:x_{j}\: \big) \\
+&=\;\frac{1}{k}\:(\:x_{k} \: + \: (k-1)\:\mu_{k-1} \: )\\
+&=\; \mu_{k-1} \: + \: \frac{1}{k}\:(\:x_{k} \: - \:\mu_{k-1} \: )
+\end{aligned}
+\label{eq:incr_mean}
+\end{equation}
+The difference $x_{k} - \mu_{k-1}$ basically defines the error term, where $\mu_{k-1}$ represents the expected value and $x_{k}$ the actual value. In the process of (\ref{eq:incr_mean}), the value of the mean will then get an update slightly into the direction of the error term.
+
+This can be applied to the Monte-Carlo Learning. The value $V(s)$ of a state $s$ will be updated incrementally after an episode $S_{1}, A_{1}, R_{2}, \ldots, S_{t}$:
+\begin{itemize}
+\item For each state $S_{t}$ with return $G_{t}$: \\
+$N(s) \leftarrow N(s) + 1$ \\
+$V(S_{t}) \leftarrow V(S_{t}) + \frac{1}{N(s)} (G_{t} - V(S_{t}))$
+\item In non-stationary problems, it can be useful to track a running mean, e.g. forget old episodes \\
+$V(S_{t}) \leftarrow V(S_{t}) + \alpha (G_{t} - V(S_{t}))$
+\end{itemize}
+
+\subsection*{Temporal-Difference Learning}
+Like with Monte-Carlo Learning, Temporal-Difference Learning learns from episodes of experience and needs no knowledge of the MDP transitions or rewards, they are both \textit{model-free}. In contrast to Monte Carlo Learning however, Temporal-Difference Learning also learns from incomplete episodes, they don't have to terminate. By taking partial episodes and estimating the remaining return, it can learn from incomplete episodes. It iteratively updates the guesses of the return while going thorugh an episode. This is called \textit{bootstrapping}.
+
+\subsubsection*{The simplest Temporal-Difference Learning algorithm: TD(0)}
+\begin{itemize}
+\item The value of $V_{s}$ is updated towards the \textit{estimated} return: $R_{t+1}+\gamma V(S_{t+1})$
+\begin{align*}
+V(S_{t}) \leftarrow V(S_{t}) + \alpha (R_{t+1}+\gamma V(S_{t+1}) - V(S_{t}))
+\end{align*}
+\item $R_{t+1}+\gamma V(S_{t+1})$     is called the TD target (the estimated return)
+\item $\delta_{t} = (R_{t+1}+\gamma V(S_{t+1}) - V(S_{t}))$     is called the TD error
+\end{itemize}
+
+\includegraphics[scale=0.3]{pictures/mc_td.jpg}
+\caption{The difference between Monte-Carlo and Temporal-Difference Learning.}
+\label{img:mc_td}
 \end{document}
+
+As seen in caption \ref{img:mc_td}, the predicted total travel time gets updated after every state in TD Learning, while in MC learning all the values of the states will be updated after the episode.

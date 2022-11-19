@@ -1,6 +1,7 @@
 \documentclass[10pt]{article}
 \usepackage{amsmath, amssymb}
 \usepackage{xparse}
+\usepackage{graphicx}
 
 \begin{document}
 \section{Lecture two: Markov Decision Process (MDP)}
@@ -270,13 +271,13 @@ q_{*}(s,\:a)\;=\;\mathcal{R}_{s}^{a}\;+\;\gamma \sum_{s' \in \mathcal{S}} \mathc
 As we did before in (\ref{eq:v_pi_be}), we can put these two together to create the recursive relationship with the two-step lookahead. For the optimal solution, we pick the maximum instead of the average. This is the Bellman optimality equation for $v_{*}$:
 
 \begin{equation}
-v_{*}(s)\;=\;\mathop{max}_{a}\: \left( \: \mathcal{R}_{s}^{a}\;+\;\gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^{a}\:v_{*}(s') \: \right)
+v_{*}(s)\;=\;\mathop{max}_{a \in \mathcal{A}}\: \left( \: \mathcal{R}_{s}^{a}\;+\;\gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^{a}\:v_{*}(s') \: \right)
 \end{equation}
 
 By reordering the same idea, we can again define the Bellman optimality equation for $q_{*}$. 
 
 \begin{equation}
-q_{*}(s,\:a)\;=\;\mathcal{R}_{s}^{a}\;+\;\gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^{a}\: \sum_{a' \in \mathcal{A}} \mathop{max}_{a'} \; q_{*}(s', a')
+q_{*}(s,\:a)\;=\;\mathcal{R}_{s}^{a}\;+\;\gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^{a}\: \sum_{a' \in \mathcal{A}} \mathop{max}_{a' \in \mathcal{A}} \; q_{*}(s', a')
 \end{equation}
 
 \subsubsection*{Solving the Bellman Optimality Equation}
@@ -288,6 +289,121 @@ $\qquad \rightarrow$ Solving by inverting matrices like in (\ref{eq:averaging_mr
 \item Many iterative solution methods \newline
 $\qquad \rightarrow$ Value iteration, policy interation, \textbf{Q-Learning}, Sarsa
 \end{itemize}
-\newline 
+\newpage
 
+\section{Lection Three: Planning by Dynamic Programming}
+\subsection{Introduction}
+\textbf{Dynamic}: sequential or temporal component to problem \newline
+\textbf{Programming}: optimising a 'problem', e.g. a policy\newline
+
+$\rightarrow$ Solving complex problems by braking them down into subproblems, then combine their solutions
+
+\subsubsection*{Properties of problems for dynamic programming:}
+\begin{itemize}
+\item Optimal substructure: \\
+$\rightarrow$ Principle of optimality applies \\
+$\rightarrow$ Optimal solution can be decomposed into subproblems
+\item Overlapping substructure \\
+Subproblems reoccur many times $\rightarrow$ Solutions can be cached and reused
+\end{itemize}
+
+MDPs statisfy both properties. The Bellman Equation gives the recursive decompostion. The value function stores and reuses the solutions. Dynamic Programming thereby assumes full knowledge of the MDP, it is used for \textit{planning} in an MDP.
+
+\subsubsection*{For prediction}
+\begin{itemize}
+\item \textbf{Input:} An MDP $\langle \mathcal{S,A,P,R,\gamma} \rangle$ and policy $\pi$ or an MRP $\langle \mathcal{S,P^{\pi},R^{\pi},\gamma} \rangle$ 
+\item \textbf{Output:} value function $v_{\pi}$
+\end{itemize}
+or
+\subsubsection*{For Optimal Control}
+\begin{itemize}
+\item \textbf{Input:} An MDP $\langle \mathcal{S,A,P,R,\gamma} \rangle$ 
+\item \textbf{Output:} Optimal value function $v_{*}$ and optimal policy $\pi_{*}$
+\end{itemize}
+
+\subsection{Synchronous Dynamic programming algorithms}
+\subsubsection*{Policy Evaluation and Policy Iteration}
+Solution: iterative application of Bellman Equation $v_{1} \rightarrow v_{2}  \rightarrow v_{3}  \rightarrow \ldots \ v_{n}$
+Using \textit{synchronous} backups:
+\begin{itemize}
+\item At each iteration k + 1
+\item For all states $s \in \mathcal{S}$
+\item Update $v_{k+1}(s)$ from $v_{k}(s')$ where s' is a successor state of s
+\end{itemize}
+
+Given a policy $\pi$, how do zou find out if it's optimal?
+\begin{itemize}
+\item \textit{Evaluate} the policy $\pi \rightarrow$ Compute the value function $v_{\pi}$
+\item \textit{Improve} the policy by acting greedily with respect to $v_{\pi}$
+\end{itemize}
+Acting greedily means picking the action that returns the most reward. This will in every case improve the value function. In general, it always needs a lot of improvement and evaluation. This process will \textit{always} converge to $\pi_{*}$, no matter in which state you begin.
+
+\includegraphics[scale=0.35]{pictures/eval_impr.png}
+
+\subsubsection*{What does policy improvement mean?}
+Consider a deterministic policy $a = \pi(s)$
+\begin{itemize}
+\item We can \textit{improve} the policy by acting greedily:  $\pi'(s) = \mathop{argmax}_{a \in \mathcal{A}} \; q_{\pi_{*}}(s,a)$
+\item This will improve the value from any state s over one step: \\
+$q_{\pi}(s, \pi'(s)) \;= \; \mathop{max}_{a \in \mathcal{A}} \; q_{\pi_{*}}(s,a) \; \geq \; q_{\pi_{*}}(s,a)\; + \; v_{\pi}$
+\item Keep iterating over the coming time-steps
+\item If improvement stops: \\
+ $q_{\pi}(s, \pi'(s)) \;= \; \mathop{max}_{a \in \mathcal{A}} \; q_{\pi}(s,a) \; = \; q_{\pi}(s,a)\; = \; v_{\pi}$ \\
+ $\qquad \rightarrow \qquad$ Bellman optimality equation is satisfied: $v_{\pi}(s)\;=\;\mathop{max}_{a \in \mathcal{A}} \; q_{\pi}(s,a)$
+ \item Therefore: $v_{\pi} \; = \; v_{*}$ for all $s \in \mathcal{S} \qquad \rightarrow \qquad \pi$ is an optimal policy
+\end{itemize}
+
+\subsubsection*{Value iteration}
+Any optimal policy can be subdivided into two components:
+\begin{itemize}
+\item An optimal first action $A_{*}$
+\item Followed by an optimal policy from successor state $S'$
+\end{itemize}
+The policy is optimal, if from each state we might end up the policy is optimal from that state onwards.
+If we know the solution to subproblems $v'_{*}(s)$, the solution $v_{*}(s)$ can be found iteratively by one-step lookahead:
+\begin{equation}
+v_{*}(s)\; \leftarrow \; \mathop{max}_{a \in \mathcal{A}}\: \left( \: \mathcal{R}_{s}^{a}\;+\;\gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^{a}\:v_{*}(s') \: \right)
+\end{equation}
+The idea of value iteration is to apply these updates iteratively, thereby moving through the whole state-space. The intuition is that you begin with your final reward and work your way backwards.
+
+Unlike policy iteration, there is no explicit policy. Intermediate value functions may not correspond to any policy.
+
+\includegraphics[scale=0.2]{pictures/synchronous_algorithms.jpg}
+
+These algorithms are based on the state-value function $v_{\pi}(s)$ or $v_{*}(s)$. They have a complexity of $\mathcal{O}(mn^2)$ per iteration, for $m$ actions and $n$ states. The algorithms could also apply to $q_{\pi}(s)$ or $q_{*}(s)$, where the complexity would be $\mathcal{O}(m^{2}n^{2})$.
+
+\subsection{Asynchronous dynamic programming}
+It is not necessary to update every state at each sweep of the algorithm. In \textit{asynchronous} backups, the relationship of updating every state in each iteration is broken. This saves a lot of unnecessary work and as long as all states keep being selected at some time, the algorithm will still converge to the optimal solution.
+
+\subsubsection*{In-place dynamic programming}
+Synchronous value iteration stores two copies of the value function:
+\begin{align}
+v_{new}(s)\; \leftarrow \; \mathop{max}_{a \in \mathcal{A}}\: \left( \: \mathcal{R}_{s}^{a}\;+\;\gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^{a}\:v_{old}(s') \: \right) \\ 
+v_{old} \; \leftarrow \; v_{new}
+\end{align}
+In-place value iteration only stores one copy of value function by using the latest version of the value function available. That means if a state has been visited before, the algorithm uses the already calculated value instead of the old one. This tends to be more efficient, but the order of the states being swept is not relevant for the efficiency of the algorithm.
+
+\subsubsection*{Prioritized sweeping}
+By using the magnitude of the Bellman error to guide state selection, the states with the largest difference after an update have a higher priority. These will have the most effect in downstream computing. It is important though to update the Bellman error after each backup, which required knowledge of reverse-dynamics of a system for the predecessor states. The Bellman error is described as following:
+
+\begin{equation}
+\Big| \;  \mathop{max}_{a \in \mathcal{A}}\: \left( \: \mathcal{R}_{s}^{a}\;+\;\gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{ss'}^{a}\:v_{old}(s') \: \right) \; - \; v(s) \; \Big|
+\end{equation}
+
+\subsubsection{Real-time Dynamic Programming}
+The idea of \textit{Real-time programming} is to only update the states which are relevant to the agent. The experience of the agent is used to guide the the selection of states. After each time-step $S_{t}, A_{t}, R_{t+1}$, a backup of state $S_{t}$ is done.
+
+\begin{equation}
+v(S_{t})\; \leftarrow \; \mathop{max}_{a \in \mathcal{A}}\: \left( \: \mathcal{R}_{S_{t}}^{a}\;+\;\gamma \sum_{s' \in \mathcal{S}} \mathcal{P}_{S_{t}s'}^{a}\:v(s') \: \right) 
+\end{equation}
+
+\subsubsection{Full-Width and Sample backups}
+Dynamic programming uses \textit{full-width backups}, meaning that every state is backed up. For medium-sized problems consisting of a few millions of states, this is fine. But for large problems, dynamic programming suffer from the \textit{curse of dimensionality}, following from the exponential growth of the number of states with the number of state variables. 
+
+This is where sample backups come into play. Instead of backing up the whole state-space (which can be already too expensive for one iteration), only certain samples are backed up. The advantages are:
+\begin{itemize}
+\item Model-free: No advance knowledge of MDP required
+\item Breaks the curse of dimensionality through sampling
+\item Cost of backup is constatnt, independant of $|n|=\mathcal{S}$ 
+\end{itemize}
 \end{document}

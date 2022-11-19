@@ -458,7 +458,7 @@ $V(S_{t}) \leftarrow V(S_{t}) + \frac{1}{N(s)} (G_{t} - V(S_{t}))$
 $V(S_{t}) \leftarrow V(S_{t}) + \alpha (G_{t} - V(S_{t}))$
 \end{itemize}
 
-\subsection*{Temporal-Difference Learning}
+\subsection{Temporal-Difference Learning}
 Like with Monte-Carlo Learning, Temporal-Difference Learning learns from episodes of experience and needs no knowledge of the MDP transitions or rewards, they are both \textit{model-free}. In contrast to Monte Carlo Learning however, Temporal-Difference Learning also learns from incomplete episodes, they don't have to terminate. By taking partial episodes and estimating the remaining return, it can learn from incomplete episodes. It iteratively updates the guesses of the return while going thorugh an episode. This is called \textit{bootstrapping}.
 
 \subsubsection*{The simplest Temporal-Difference Learning algorithm: TD(0)}
@@ -471,9 +471,57 @@ V(S_{t}) \leftarrow V(S_{t}) + \alpha (R_{t+1}+\gamma V(S_{t+1}) - V(S_{t}))
 \item $\delta_{t} = (R_{t+1}+\gamma V(S_{t+1}) - V(S_{t}))$     is called the TD error
 \end{itemize}
 
-\includegraphics[scale=0.3]{pictures/mc_td.jpg}
+\begin{figure}
+\includegraphics[scale=0.2]{pictures/mc_td.jpg}
 \caption{The difference between Monte-Carlo and Temporal-Difference Learning.}
 \label{img:mc_td}
-\end{document}
+\end{figure}
 
 As seen in caption \ref{img:mc_td}, the predicted total travel time gets updated after every state in TD Learning, while in MC learning all the values of the states will be updated after the episode.
+
+\subsubsection*{Advantages and Disadvantages of Temporal-Difference vs. Monte-Carlo Learning}
+
+\begin{itemize}
+\item TD can learn before knowing the final outcome
+\begin{itemize}
+\item TD can learn online after every step
+\item MC must wait until the end of an episode before return is known
+\end{itemize}
+\item TD can learn without the final outcome
+\begin{itemize}
+\item TD can learn from incomplete sequences
+\item MC can only learn from complete sequences
+\item TD works in continuing environments
+\item MC only works for episodic (terminating) environments
+\end{itemize}
+\end{itemize}
+
+\subsubsection*{Bias / Variance Trade-Off}
+\begin{itemize}
+\item The return $G_{t}$ and the true TD target $R_{t+1}+\gamma v_{\pi}(S_{t+1})$ are both \textit{unbiased} estimates of $v_{\pi}(S_{t})$. 
+\item The actual TD target $R_{t+1}+\gamma V(S_{t+1})$ is a \textit{biased} estimate of $v_{\pi}(S_{t})$. It is much lower variance than the return:
+\begin{itemize}
+\item Return depends on \textit{many} random actions, transitions and rewards.
+\item TD target depends on \textit{one} random action, transition and reward.
+\end{itemize}
+\item MC has high variance, zero bias
+\begin{itemize}
+\item Good convergence properties, even with function approximation
+\item Not very sensitive to initial value
+\item Very simple to understand and use.
+\end{itemize}
+\item TD has low variance, some bias
+\begin{itemize}
+\item Usually more efficient than MC
+\item TD(0) converges to $v_{\pi}(s)$ - but not always with function approximation
+\item More sensitive to initial value
+\end{itemize}
+\item Certainty equivalence:
+\begin{itemize}
+\item MC converges to solution with minimal mean-squared error \\ $ \rightarrow$ Best fit to the observed returns
+\item TD converges to solution of max likelihood Markov model \\ $ \rightarrow$ Solution to the MDP that best fits the data
+\end{itemize}
+\item TD exploits Markov property by using it, therefore is more efficient in a Markov environment. MC ignores the Markov property, therefore does not exploit it.
+\end{itemize}
+
+\end{document}

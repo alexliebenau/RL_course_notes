@@ -10,3 +10,4 @@
 \contentsline {subsection}{\numberline {3.3}Asynchronous dynamic programming}{10}{}%
 \contentsline {section}{\numberline {4}Lecture Four: Model-Free Prediction}{12}{}%
 \contentsline {subsection}{\numberline {4.1}Monte-Carlo Learning}{12}{}%
+\contentsline {subsection}{\numberline {4.2}Temporal-Difference Learning}{13}{}%

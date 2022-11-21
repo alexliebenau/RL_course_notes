@@ -494,6 +494,12 @@ As seen in caption \ref{img:mc_td}, the predicted total travel time gets updated
 \item TD works in continuing environments
 \item MC only works for episodic (terminating) environments
 \end{itemize}
+\item Certainty equivalence:
+\begin{itemize}
+\item MC converges to solution with minimal mean-squared error \\ $ \rightarrow$ Best fit to the observed returns
+\item TD converges to solution of max likelihood Markov model \\ $ \rightarrow$ Solution to the MDP that best fits the data
+\end{itemize}
+\item TD exploits Markov property by using it, therefore is more efficient in a Markov environment. MC ignores the Markov property, therefore does not exploit it.
 \end{itemize}
 
 \subsubsection*{Bias / Variance Trade-Off}
@@ -516,12 +522,132 @@ As seen in caption \ref{img:mc_td}, the predicted total travel time gets updated
 \item TD(0) converges to $v_{\pi}(s)$ - but not always with function approximation
 \item More sensitive to initial value
 \end{itemize}
-\item Certainty equivalence:
+\end{itemize}
+
+
+\begin{center}
+\begin{minipage}[t]{0.45\textwidth}
+\textbf{Monte-Carlo Backup:}
+\includegraphics[width=\textwidth]{pictures/mc_backup.jpg}
+\end{minipage} \hfill
+\begin{minipage}[t]{0.45\textwidth}
+\textbf{Temporal-Difference Backup:}
+\includegraphics[width=\textwidth]{pictures/td_backup.jpg}
+\end{minipage}
+\newline \newline \newline
+\begin{minipage}[t]{0.45\textwidth}
+\textbf{Dynamic Programming Backup:}
+\includegraphics[width=\textwidth]{pictures/dp_backup.jpg}
+
+Note: The \textit{'Exhaustive search'} would consider every branch as in Dynamic Programming, but then follow its leafs until the end like Monte-Carlo instead of taking an estimate.
+\end{minipage} \hfill
+\begin{minipage}[t]{0.4\textwidth}
 \begin{itemize}
-\item MC converges to solution with minimal mean-squared error \\ $ \rightarrow$ Best fit to the observed returns
-\item TD converges to solution of max likelihood Markov model \\ $ \rightarrow$ Solution to the MDP that best fits the data
+\item \textbf{Bootstrapping:} \\ update involves an estimate
+\begin{itemize}
+\item MC does not bootstrap
+\item TD and DP do
 \end{itemize}
-\item TD exploits Markov property by using it, therefore is more efficient in a Markov environment. MC ignores the Markov property, therefore does not exploit it.
+\item \textbf{Samling:} \\ update samples an expectation
+\begin{itemize}
+\item MC and TD sample
+\item DP does not sample
 \end{itemize}
+\end{itemize}
+\end{minipage}
+\end{center}
+\newpage
+\begin{figure}
+\includegraphics[scale=0.12]{pictures/unified_view.jpg}
+\caption{Unified view of Reinforcement Learning}
+\end{figure}
+
+\subsection{TD($\lambda$)}
+\subsubsection*{n-step Prediction}
+
+\begin{figure}[h!]
+\includegraphics[scale=0.12]{pictures/n_step_pred.jpg}
+\end{figure}
+\subsubsection*{n-step Return}
+\begin{align*}
+n=1 \quad & (TD) \quad &G_{t}^{(1)} \; &= \; R_{t+1} \:  \gamma V(S_{t+1}) \\
+n=2 \quad & \quad \quad &G_{t}^{(2)} \; &= \; R_{t+1} \:  \gamma R_{t+2} \: + \: \gamma^{2} V(S_{t+2}) \\
+\vdots \quad &\quad \quad &\vdots & \\
+n=\infty \quad & (MC) \quad &G_{t}^{(\infty)} \; &= \; R_{t+1} \: + \:  \gamma R_{t+2} \: + \: \gamma^{T-1} R_{T}
+\end{align*}
+
+Define the \textit{n}-step return for the estimator:
+\begin{equation}
+G_{t}^{(n)} \; = \; R_{t+1} \: + \: \gamma R_{t+2} \: + \ldots \: + \: \gamma^{n-1} R_{t+n} \: + \: \gamma^{n} V(S_{t+n}) 
+\end{equation}
+
+\textit{n}-step Temporal-Difference Learning:
+\begin{equation}
+V(S_{t}) \leftarrow V(S_{t}) + \alpha (G_{t}^{(n)} - V(S_{t})
+\end{equation}
+
+\subsubsection*{Forward-view of TD($\lambda$)}
+\begin{minipage}{0.5\textwidth}
+\includegraphics[width=\textwidth]{pictures/lambda_return.jpg}
+\end{minipage} \hfill
+\begin{minipage}{0.5\textwidth}
+The $\lambda$-return $G_{t}^{(\lambda)}$ combines all $n$-step returns $G_{t}^{(n)}$  \\ \\
+Using weight $(1-\lambda)\lambda^{n-1}$:
+\begin{equation}
+G_{t}^{\lambda}\;=\; (1-\lambda)\:\sum_{n=1}^{\infty} \lambda^{n-1} \: G_{t}^{(n)}
+\end{equation}
+By using this to update the value function, we get the Forward-view TD($\lambda$)
+\begin{equation}
+V(S_{t}) \leftarrow V(S_{t}) + \alpha (G_{t}^{\lambda} - V(S_{t}))
+\end{equation}
+\end{minipage}
+
+
+\includegraphics[width=0.9\textwidth]{pictures/tdl_weight.jpg}
+
+The Forward-view looks into the future to compute $G_{t}^{(\lambda)}$. Like Monte-Carlo Learning, it can only be computed from complete episodes.
+\newpage
+\subsubsection*{Backward-view of TD($\lambda$)}
+
+\begin{center}
+
+\textit{The Forward-view provides theory, the Backward-view provides mechanism}
+\end{center}
+It updates online, every step, from incomplete sequences. \newline
+
+\begin{itemize}
+\item \textbf{Frequency heuristic:} Assign credit to most frequent states
+\item \textbf{Recency heuristic:} Assign credit to most recent states
+\end{itemize}
+$\qquad \rightarrow \quad$ \textit{Eligibility traces} combine both heuristics!
+
+\includegraphics[width=0.75\textwidth]{pictures/eli_trace.jpg}
+
+\begin{align*}
+E_{0}(s) \; &= \; 0 \\
+E_{t}(s) \; &= \gamma \lambda E_{t-1}(s)\: + \: \mathbf{1}(S_{t} =s)
+\end{align*}
+
+Backward-view TD($\lambda$)-Algorithm:
+\begin{itemize}
+\item Keep an eligibility trace for every state $s$
+\item Update value $V(s)$ for every state $s$
+\item In proportion to TD-error $\delta_{t}$ and eligibility trace $E_{t}(s)$
+\begin{align}
+\delta_{t} \; &= \; R_{t+1} \: + \: \gamma V(S_{t+1}) - V(S_{t}) \\
+V(s) \; &\leftarrow \; V(s) \: + \: \alpha \delta_{t} E_{t}(s)
+\end{align}
+\end{itemize}
+
+\subsubsection*{Relationship between Forward and Backward TD($\lambda$)}
+
+The sum of the offline\footnote{Even for online updating it is now possible to achieve equivalence for forward and backward view TD($\lambda$) - see } updates is the same identical for forward-view and backward-view TD($\lambda$)
+
+\begin{equation}
+\sum_{t=1}^{T}\:\alpha \delta_{t} E_{t}(s)\;=\;\sum_{t=1}^{T}\alpha (G_{t}^{\lambda} - V(S_{t})) \: \mathbf{1}(S_{t} =s)
+\end{equation}
+\begin{center}
+\includegraphics[width=0.7\textwidth]{pictures/overview_tdl.jpg}
+\end{center}
 
 \end{document}

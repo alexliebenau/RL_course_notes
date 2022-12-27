@@ -558,7 +558,7 @@ Note: The \textit{'Exhaustive search'} would consider every branch as in Dynamic
 \end{center}
 \newpage
 \begin{figure}
-\includegraphics[scale=0.12]{pictures/unified_view.jpg}
+\includegraphics[width=0.7\textwidth]{pictures/unified_view.jpg}
 \caption{Unified view of Reinforcement Learning}
 \end{figure}
 
@@ -566,7 +566,7 @@ Note: The \textit{'Exhaustive search'} would consider every branch as in Dynamic
 \subsubsection*{n-step Prediction}
 
 \begin{figure}[h!]
-\includegraphics[scale=0.12]{pictures/n_step_pred.jpg}
+\includegraphics[width=0.7\textwidth]{pictures/n_step_pred.jpg}
 \end{figure}
 \subsubsection*{n-step Return}
 \begin{align*}
@@ -595,7 +595,7 @@ The $\lambda$-return $G_{t}^{(\lambda)}$ combines all $n$-step returns $G_{t}^{(
 Using weight $(1-\lambda)\lambda^{n-1}$:
 \begin{equation}
 G_{t}^{\lambda}\;=\; (1-\lambda)\:\sum_{n=1}^{\infty} \lambda^{n-1} \: G_{t}^{(n)}
-\end{equation}
+\label{eq:fw-lambda} \end{equation}
 By using this to update the value function, we get the Forward-view TD($\lambda$)
 \begin{equation}
 V(S_{t}) \leftarrow V(S_{t}) + \alpha (G_{t}^{\lambda} - V(S_{t}))
@@ -649,5 +649,253 @@ The sum of the offline\footnote{Even for online updating it is now possible to a
 \begin{center}
 \includegraphics[width=0.7\textwidth]{pictures/overview_tdl.jpg}
 \end{center}
+
+\section{Model-Free Control}
+\begin{center}
+\textbf{Model-free prediction:} \textit{Estimate} the value function of an \textit{unknown} MDP
+\textbf{Model-free control:} \textit{Optimise} the value function of an \textit{unknown} MDP
+\end{center}
+
+
+Model-free control can solve problems whether either the MDP model is unknown, but experience can be sampled or where the MDP model is known but too big to use - except by samples (e.g. when the underlying real-world dynamics are very complicated).
+
+\subsection{On and Off-policy learning}
+\subsubsection*{On-policy learning:}
+\begin{itemize}
+\item "Learn on the job"
+\item "Learn about policy $\pi$ from experience sampled from $\pi$
+\end{itemize}
+
+\subsubsection*{Off-policy learning:}
+\begin{itemize}
+\item "Look over someone's shoulder"
+\item "Learn about policy $\pi$ from experience sampled from $\mu$
+\end{itemize}
+
+\subsubsection*{Model-Free Policy iteration using action-value function}
+
+Greedy policy improvement over the state value function $V(s)$ requires a model of the MDP:
+\begin{equation}
+\pi'(s) \; = \; \mathop{argmax}_{a \in \mathcal{A}} \mathcal{R}_{s}^{a} \: + \: \mathcal{P}_{ss;}^{a} V(s')
+\end{equation}
+...whereas greedy policy improvement over the action value function $Q(s,a)$ is model-free
+\begin{equation}
+\pi'(s) \; = \; \mathop{argmax}_{a \in \mathcal{A}} Q(s,a)
+\end{equation}
+
+\subsection{$\epsilon$-Greedy Exploration}
+This is them simplest idea for ensuring continual exploration.
+\begin{itemize}
+\item All \textit{m} actions are tried with non-zero probability
+\item With probability 1-$\epsilon$ choose the greedy action
+\item With probability $\epsilon$ choose an action at random 
+\end{itemize}
+
+\begin{equation}
+\pi(a|s)\; = \; \Big\{ \; \begin{matrix} \epsilon/m+1-\epsilon \qquad & $if$ \quad a* = \mathop{argmax}_{a \in \mathcal{A}} Q(s, a) \\
+\epsilon / m & $otherwise$ \\\end{matrix} 
+\end{equation}
+
+\newpage
+\textbf{GLIE:} Greedy in the Limit with Infinite Exploration
+\begin{itemize}
+\item All state-action pairs are explored infinitely many times: \\
+$\mathop{lim}_{k \rightarrow \infty} N_{k} (s, a) = \infty$
+\item The policy converges on a greedy policy \\
+$\mathop{lim}_{k \rightarrow \infty} \pi_{k}(a|s) = \mathbf{1}(a = \mathop{argmax}_{a' \in \mathcal{A}}\: Q_{k}(s, a')) \\ \\
+\rightarrow \quad$ for example, $\epsilon$-greedy is GLIE if $\epsilon$ reduces to zero at $\epsilon_{k} = \frac{1}{k}$
+\end{itemize}
+
+\subsubsection*{GLIE Monte-Carlo Control}
+
+\begin{itemize}
+\item Sample \textit{k}-th epsidoe using $\pi: {S_{1}, A_{1}, R_{2}, \ldots, S_{T} } \sim \pi$
+\item For each state $S_{T}$ and action $A_{T}$ in the episode,
+\begin{align*}
+N(S_{t}, A_{t}) \; &\leftarrow \; N(S_{t}, A_{t}) \: + \: 1 \\
+Q(S_{t}, A_{t}) \; &\leftarrow \; Q(S_{t}, A_{t})) \: + \: \frac{1}{N(S_{t}, A_{t})} (G_{t} - Q(S_{t}, A_{t}))
+\end{align*}
+\item Improve policy based on new action-value function
+\begin{align*}
+ \epsilon \; &\leftarrow \; 1/l \\ \pi \; &\leftarrow \;  \epsilon - greedy(Q)	
+\end{align*}
+\end{itemize}
+
+\subsection{TD($\lambda$) Control}
+
+\subsubsection*{MC vs. TD control}
+
+Temporal difference (TD) Learning has several advantages over Monte-Carlo (MC):
+\begin{itemize}
+\item Lower variance
+\item online
+\item Incomplete sequences
+\end{itemize}
+Natural idea: use TD instead of MC in our control loop
+\begin{itemize}
+\item Apply TD to Q(S, A)
+\item Use $\epsilon$-greedy policy improvement
+\item Update every time step
+\end{itemize}
+\newpage
+
+\subsubsection*{Updating Action-Value Functions with \textit{Sarsa}}
+
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[width=0.25\textwidth]{pictures/sarsa.jpg}
+\end{center}
+\end{figure}
+\begin{equation} \small
+Q^{new}\:(s_{t}, a_{t})  = \underbrace{Q(s_{t}, a_{t})}_{\text{current value}}  + \underbrace{\alpha}_{\text{learning rate}} \cdot 
+\overbrace{\Bigl( \underbrace{\underbrace{r_{t}}_{\text{reward}} + \underbrace{\gamma}_{\text{discount factor}} \cdot \underbrace{\mathop{max}_{a \in \mathcal{A}} Q(s_{t}, a_{t+1})}_{\text{estimate of optimal future value}}}_{\text{new value (temporal difference target)}} - \underbrace{Q(s_{t}, a_{t})}_{\text{current value}} \Bigr) }^{\text{temporal difference}}
+\end{equation}
+The \textit{Sarsa}-algorithm for on-policy learning would be the following:
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{pictures/sarsa_alg.jpg}
+\end{center}
+\end{figure}
+
+\textbf{$\rightarrow$ \textit{n}-Step Sarsa}
+
+\begin{align*}
+n=1 \quad & (Sarsa) \quad &q_{t}^{(1)} \; &= \; R_{t+1} \:  \gamma Q(S_{t+1}) \\
+n=2 \quad & \quad \quad &q_{t}^{(2)} \; &= \; R_{t+1} \:  \gamma R_{t+2} \: + \: \gamma^{2} Q(S_{t+2}) \\
+\vdots \quad &\quad \quad &\vdots & \\
+n=\infty \quad & (MC) \quad &q_{t}^{(\infty)} \; &= \; R_{t+1} \: + \:  \gamma R_{t+2} \: + \: \gamma^{T-1} R_{T}
+\end{align*}
+
+Define the \textit{n}-step Q-return:
+\begin{equation}
+q_{t}^{(n)} \; = \; R_{t+1} \: + \: \gamma R_{t+2} \: + \ldots \: + \: \gamma^{n-1} R_{t+n} \: + \: \gamma^{n} Q(S_{t+n}) 
+\end{equation}
+
+\textit{n}-step Sarsa updates Q(s, a) towards the \textit{n}-step Q-return
+\begin{equation}
+Q(S_{t}, A_{t}) \leftarrow Q(S_{t}, A_{t}) + \alpha \bigl( q_{t}^{(n)} - Q(S_{t}, A_{t}) \bigr)
+\end{equation}
+
+By following the same logic as for TD($\lambda$) in (\ref{eq:fw-lambda}) and using weight $(1-\lambda) \lambda^{n-1}$
+\begin{equation}
+q^{\lambda}_{t} = (1-\lambda) \sum_{n=1}^{\infty} \lambda^{n-1}q^{(n)}_{t}
+\end{equation}
+
+... we get the \textbf{Forward-view Sarsa($\lambda$)}
+\begin{equation}
+Q(S_{t}, A_{t}) \leftarrow Q(S_{t}, A_{t}) + \alpha \bigl( q_{t}^{(\lambda)} - Q(S_{t}, A_{t}) \bigr)
+\end{equation}
+
+Just like TD($\lambda$), we use \textit{eligibility traces} in an online algorithm for \textbf{Backward-View Sarsa($\lambda$)}. Is this case, Sarsa($\lambda$) has one eligibility trace for each state-action pair:
+
+\begin{align}
+E_{0} (s, a) \; &= \; 0 \\
+E_{t} (s, a) \; &= \; \gamma \lambda E_{t-1}(s, a) + \underbrace{\mathbf{1}(S_{t} = s, A_{t}}_{\text{increment by 1 each time the state-action pair is visited}}
+\end{align}
+
+\textit{Q(s, a)} is updated for every state \textit{s} and \textit{a} in proportion to TD-error $\delta_{t}$ and eligibility trace $E_{t}(s, a)$:
+\begin{align}
+\delta_{t} \; &= \; R_{t+1} + \gamma Q(S_{t+1}, A_{t+1}) - Q(S_{t}, A_{t}) \\
+Q^{new}\:(s, a) \; &\leftarrow \; Q(s, a) \; + \underbrace{\alpha}_{\text{learning rate}} \cdot \underbrace{\delta_{t}}_{\text{TD-error}} \cdot \underbrace{E_{t}}_{\text{eligibility trace}}
+\end{align}
+
+The algorithm looks like this:
+
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{pictures/sarsa_lmd_alg.jpg}
+\caption{Sarsa($\lambda$)-Algorithm}
+\end{center}
+\end{figure}
+
+\newpage
+\subsection{Off-Policy Learning}
+
+Evaluate \textit{target policy} $\pi(a|s)$ to compute $v_{\pi}(s)$ or $q_{\pi}(s, a)$ while following \textit{behaviour policy} $\mu (a|s)$: $\{S_{1}, A_{1}, R_{2}, \ldots, S_{T}\} \thicksim \mu$ \newline
+
+Why is this important?
+\begin{itemize}
+\item Learn from observing humans or other agents
+\item Re-use experience gained from old policies $\pi_{1}, \pi_{2}, \dots, \pi_{t-1}$
+\item Learn about \textit{optimal} policy while follow \textit{exploratory} policy
+\item Learn about \textit{multiple} policies while following \textit{one} policy
+\end{itemize}
+
+\subsubsection*{Importance Sampling}
+\begin{align*}
+\mathbb{E}_{X \sim P} \: [f(X)] \; &= \; \sum P(X) f(x) \\
+&= \; \sum Q(X) \frac{P(X)}{Q(X)} f(X) \\
+&= \mathbb{E}_{X \sim Q} \Bigg[ \frac{P(X)}{Q(X)} f(X) \Bigg]
+\end{align*}
+
+\textbf{Importance Sampling for Off-Policy Monte Carlo:}
+\begin{itemize}
+\item Use return form $\mu$ to evaluate $\pi$
+\item Weight return $G_{t}$ according to similarities between policies
+\item Multiply importance sampling corrections along whole episode: \\
+\begin{equation}
+G_{t}^{\pi / \mu} \; = \; \frac{\pi(A_{t} | S_{t}) \: \pi(A_{t+1} | S_{t+1})}{\mu(A_{t} | S_{t}) \: \mu(A_{t+1} | S_{t+1})} \; \ldots  \; \frac{\pi(A_{T} | S_{T})}{\mu(A_{T} | S_{T})} G_{t}
+\end{equation}
+\item Update value towards \textit{corrected} return
+\begin{equation}
+V(S_{t}) \; \leftarrow \; V(S_{t}) \; + \; \alpha \Big( G_{t}^{\pi / \mu} - V(S_{t}) \Big)
+\end{equation}
+\item Cannot use if $\mu$ is zero when $\pi$ is non-zero
+\item Importance sampling can dramatically increase variance \newline $\rightarrow$ \textbf{in reality unusable because of multiplied probabilities}
+\end{itemize}
+
+For importance sampling, \textbf{bootstrapping becomes necessary} to gain useful information to avoid the multiplied probabilities.
+\newline \newline
+\textbf{Importance Sampling for Off-Policy TD}
+\begin{itemize}
+\item Use TD targets generate from $\mu$ to evaluate $\pi$
+\item Weight TD target $R + \gamma V(S')$ by importance sampling
+\item Only need a single importance sampling correction (because of bootstrapping):
+\begin{equation}
+V(S_{t}) \; \leftarrow \; V(S_{t}) \; + \; \alpha \Big( \frac{\pi(A_{t} | S_{t})}{\mu(A_{t} | S_{t})} \big( (R_{t+1} + \gamma V(S_{t+1}) \big) - V(S_{t}) \Big)
+\end{equation}
+\item Much lower variance than Monte Carlo importance sampling
+\item Policies only need to be similar over a single time step
+\end{itemize}
+
+\subsubsection*{Q-Learning}
+
+For off-policy learning of Q-values Q(s, a). For this \textbf{no importance sampling} is required:
+\begin{itemize}
+\item Next action is chosen using behaviour policy: $A_{t+1} \sim \mu(\cdot | S_{t})$
+\item An alternative successor is considered: $A' \sim \pi(\cdot | S_{t})$
+\item Update $Q(S_{t}, A_{t})$ towards value of alternative action:
+\begin{equation}
+Q(S_{t}, A_{t}) \; \rightarrow \; Q(S_{t}, A_{t}) \; + \; \alpha \big( (R_{t+1} + \gamma Q(S_{t+1}, A') \; - \;  Q(S_{t}, A_{t})\big)
+\end{equation}
+\end{itemize}
+
+We now allow both policies to improve:
+\begin{itemize}
+\item The target policy $\pi$ is greedy: $\pi(S_{t+1}) = \mathop{\text{argmax}}_{a'} Q(S_{t+1}, a')$ 
+\item The behaviour policy is e.g. \textit{$\epsilon$-greedy}
+\item The Q-learning target them simplifies:
+\begin{align*}
+R_{t+1} + \gamma Q(S_{t+1}, A') &= R_{t+1} + \gamma Q \big( S_{t+1}, \mathop{\text{argmax}}_{a'} Q(S_{t+1}, a') \big) \\
+&= R_{t+1} + \mathop{\text{max}}_{a'} \gamma  Q(S_{t+1}, a')
+\end{align*}
+\end{itemize}
+
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[width=0.25\textwidth]{pictures/q_ln.jpg}
+\end{center}
+\end{figure}
+
+\begin{equation}
+Q(S, A) \; \leftarrow \; Q(S, A) \; + \; \alpha \big( R + \gamma \mathop{\text{max}}_{a'} Q(S', a') - Q(S, A) \big)
+\end{equation}
+
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{pictures/q_ln_alg.jpg}
+\caption{Q-Learning Algorithm}
+\end{center}
+\end{figure}
 
 \end{document}

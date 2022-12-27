@@ -12,3 +12,8 @@
 \contentsline {subsection}{\numberline {4.1}Monte-Carlo Learning}{12}{}%
 \contentsline {subsection}{\numberline {4.2}Temporal-Difference Learning}{13}{}%
 \contentsline {subsection}{\numberline {4.3}TD($\lambda $)}{16}{}%
+\contentsline {section}{\numberline {5}Model-Free Control}{19}{}%
+\contentsline {subsection}{\numberline {5.1}On and Off-policy learning}{19}{}%
+\contentsline {subsection}{\numberline {5.2}$\epsilon $-Greedy Exploration}{19}{}%
+\contentsline {subsection}{\numberline {5.3}TD($\lambda $) Control}{20}{}%
+\contentsline {subsection}{\numberline {5.4}Off-Policy Learning}{23}{}%
